@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 from anthropic import Anthropic
 from datetime import datetime
@@ -185,6 +186,22 @@ if prompt := st.chat_input("Ask me anything - strategic decisions, deal analysis
         
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": full_response})
+        
+        # Signal to Francium parent
+        import json as _json
+        _signal_data = _json.dumps({
+            "type": "francium_signal",
+            "toolId": "ai-chief-of-staff",
+            "event": "query_submitted",
+            "data": {
+                "analysis_mode": analysis_mode,
+                "query_preview": prompt[:200],
+                "has_files": len(st.session_state.uploaded_files_content) > 0,
+                "file_count": len(st.session_state.uploaded_files_content),
+                "message_count": len(st.session_state.messages),
+            }
+        })
+        components.html(f"<script>window.top.postMessage({_signal_data}, '*');</script>", height=0)
 
 # Export functionality
 if len(st.session_state.messages) > 0:
